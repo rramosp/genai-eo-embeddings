@@ -3,3 +3,5 @@
 Generating and evaluating LLM generated text descriptions of satellite imagery
 
 ![process](imgs/process.png) 
+
+![process](imgs/evaluation.png) 
