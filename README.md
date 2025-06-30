@@ -12,6 +12,16 @@ sampling pairs of images
 
 ![process](imgs/evaluation.png) 
 
+## Data
+
+download and unzip the data for the notebooks in this repo
+
+```
+wget https://storage.googleapis.com/disasterbrain-public/hackaton-48k-consolidated.tar.gz
+```
+
+and adjust the paths in the notebooks accordingly
+
 ## Challenges
 
 - text generation is done with RGB only
