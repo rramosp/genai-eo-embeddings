@@ -28,3 +28,4 @@ and adjust the paths in the notebooks accordingly
 - text generation is expensive
 - could do prompt optimization for generating text description of imagery (see examples at [google vertex ai](https://cloud.google.com/vertex-ai/generative-ai/docs/learn/prompts/prompt-optimizer) or [anthropic](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/prompt-improver))
 - RAG, finetune, etc.?
+- sat image generation ?
