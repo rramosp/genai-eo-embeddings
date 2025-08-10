@@ -7,6 +7,7 @@ import numpy as np
 import json
 from loguru import logger
 import google.generativeai as genai
+from time import sleep
 
 best_gemini_generation_prompt = '''
 You are analyzing a satellite image to create a comprehensive textual description for precise image retrieval from a vast da
@@ -60,20 +61,21 @@ features, etc.), specify:
 textures, atmospheric phenomena, signs of natural events).
 
 
-Focus on features that are most distinctive and useful for differentiating this image.  Provide specific locations and 
-estimate the extent of features. Pay close attention to spatial relationships, noting the proximity and arrangement of 
-features. Aim for a comprehensive yet concise description to facilitate accurate and efficient image retrieval using 
-text-based searches.  Provide illustrative examples if necessary.
+Generate a textual description, focusing on features that are most distinctive and useful for differentiating this image.  
+Pay close attention to spatial relationships, noting the proximity and arrangement of features. Aim for a comprehensive 
+yet concise description to facilitate accurate and efficient image retrieval using text-based searches.  Provide illustrative 
+examples if necessary.
 
-provide a json formated output of 'feature_name': 'percentage of coverage in the image'
+Additionally, append a section titled 'Coverage estimation', and provide in it a json formated output of 
+'feature_name': 'percentage of coverage in the image'
 '''
 
 class GeminiMultimodalModel:
 
     def __init__(self, 
                  api_key,
-                 model_name = "gemini-1.5-pro-latest", 
-                 embeddings_model_name = '',
+                 generation_model_name = "gemini-2.5-pro", 
+                 embeddings_model_name = 'gemini-embedding-001',
                  temperature = 1,   
                  top_p = 0.95,       
                  max_output_tokens = 8192,
@@ -84,14 +86,16 @@ class GeminiMultimodalModel:
 
         super().__init__()
 
-        self.model_name = model_name
-        self.temperature = temperature
-        self.top_p = top_p
-        self.max_output_tokens = max_output_tokens
-        self.verbose = verbose
-        self.api_key = api_key
-        self.generation_prompt = best_gemini_generation_prompt
+        self.generation_model_name = generation_model_name
+        self.embeddings_model_name = embeddings_model_name
+        self.temperature           = temperature
+        self.top_p                 = top_p
+        self.max_output_tokens     = max_output_tokens
+        self.verbose               = verbose
+        self.api_key               = api_key
+        self.generation_prompt     = best_gemini_generation_prompt
         
+
         # Configure the Gemini API
         if os.path.isfile(self.api_key):
             with open(self.api_key) as f:
@@ -106,7 +110,12 @@ class GeminiMultimodalModel:
           "max_output_tokens": max_output_tokens,  # Limit response length
           "response_mime_type": "text/plain",      # Output as plain text
         }
-        
+
+        if verbose:
+            logger.info(f'using generation model {self.generation_model_name}')
+            logger.info(f'using embeddings model {self.embeddings_model_name}')
+            logger.info(f'using config {generation_config}')
+
         safety_settings = [
           # Gemini's safety settings for blocking harmful content
           # (Set to "BLOCK_NONE" for no blocking)
@@ -116,43 +125,74 @@ class GeminiMultimodalModel:
           {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
         ]
         
-        self.model = genai.GenerativeModel(
-          model_name=model_name,  
+        self.generation_model = genai.GenerativeModel(
+          model_name=generation_model_name,  
           safety_settings=safety_settings,
           generation_config=generation_config,
         )
 
-    def get_name(self):
-        return self.model_name
-
     def set_generation_prompt(self, prompt):
         self.generation_prompt = prompt
 
-    def generate_description_for_image(self, img):
-        # uploads img to gemini so that it is part of the prompt
-        with tempfile.TemporaryDirectory() as tmp:
-            img_path = os.path.join(tmp, 'img.jpg')
-            io.imsave(img_path, img)
-            uploaded_img_path = genai.upload_file(img_path, mime_type=None)
-            if self.verbose: 
-                logger.info(f"uploaded file image to prompt")
-        
-        if self.verbose:
-            logger.info('querying gemini for description')
-        chat_session = self.model.start_chat(
-          history=[
-            {"role": "user", "parts": [uploaded_img_path]},
-          ]
-        )
-        prompt = self.generation_prompt
-        response = chat_session.send_message(prompt)
-        
-        return response.text
+    def generate_description_for_image(self, img, max_retries=5, sleep_secs_before_retry=30):
+
+        attempts = 0
+        while True:
+            try:
+
+                # uploads img to gemini so that it is part of the prompt
+                with tempfile.TemporaryDirectory() as tmp:
+                    img_path = os.path.join(tmp, 'img.jpg')
+                    io.imsave(img_path, img)
+                    uploaded_img_path = genai.upload_file(img_path, mime_type=None)
+                    if self.verbose: 
+                        logger.info(f"uploaded file image to prompt")
+                
+                if self.verbose:
+                    logger.info('querying gemini for description')
+                chat_session = self.generation_model.start_chat(
+                history=[
+                    {"role": "user", "parts": [uploaded_img_path]},
+                ]
+                )
+                prompt = self.generation_prompt
+                response = chat_session.send_message(prompt)
+                
+                return response.text
+
+            except Exception as e:
+                if self.verbose:
+                    logger.error(f'attempt {attempts+1}, exception {str(e)}')
+
+                attempts += 1
+                if attempts > max_retries:
+                    return f'<!!error!!>::<!!pending!!>:::\n\n{str(e)}'
+
+                if sleep_secs_before_retry is not None:
+                    sleep(sleep_secs_before_retry)
 
 
-    def generate_answer(self, text):
-        chat_session = self.model.start_chat()    
-        self.response = chat_session.send_message(text)
-        return self.response.text
+    def get_embedding(self, text, max_retries=5, sleep_secs_before_retry=10, task_type="RETRIEVAL_DOCUMENT"):
+    
+        attempts = 0
+        while True:
+            try:
+                result = genai.embed_content(
+                            model=self.embeddings_model_name,
+                            content=text,
+                            task_type=task_type
+                        )
+                return np.r_[result['embedding']]
+
+            except Exception as e:
+                attempts += 1
+                if attempts > max_retries:
+                    return f'TEXT:::{text}:::fdl2025\n\n{str(e)}'
+
+                if sleep_secs_before_retry is not None:
+                    sleep(sleep_secs_before_retry)
+
+
+
 
 

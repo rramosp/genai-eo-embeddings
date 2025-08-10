@@ -3,6 +3,8 @@ import loguru
 from .module import ClayMAEModule
 import numpy as np
 from einops import rearrange, reduce, repeat
+import os
+import yaml
 
 logger = loguru.logger
 
@@ -12,11 +14,22 @@ stds = np.array([50.44633167, 43.54469652, 44.63162242])
 
 class ClayWrapper:
 
-    def __init__(self, metadata_path, checkpoint_path):
+    def __init__(self, path):
+
+        metadata_path = f'{path}/metadata.yaml'
+        checkpoint_path = f'{path}/clay-v1.5.ckpt'
+        constants_path = f'{path}/embeddings-constants.yaml'
+
+        if not os.path.isfile(metadata_path) or not os.path.isfile(checkpoint_path) or not os.path.isfile(constants_path):
+            raise ValueError(f"model path must contain the files 'metadata.yaml', 'embeddings-constants.yaml' and 'clay-v1.5.ckpt'")
+
+        with open(constants_path) as f:
+            self.constants = yaml.load(f.read(), Loader=yaml.SafeLoader)
 
         self.device = (
             torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         )
+
         self.checkpoint_path = checkpoint_path
         self.metadata_path = metadata_path
 
@@ -52,29 +65,15 @@ class ClayWrapper:
 
         logger.info("done")
 
-    def batch_embeddings(self, batch):
+    def batch_embeddings(self, batch, standardize=True):
         """
         batch: [batch_size, 3, img_size, img_size]
                the 3 is three channels for rgb
 
                the imgs are assumed to be ints in [0,255]
+
+        standardize: True to substract the dataset mean and divide by its stdev
         """
-
-        def print_device_info(model, x):
-            # Check model device
-            print("\n=== Model Device Info ===")
-            print(f"Model parameters are on:", next(model.parameters()).device)
-
-            # Check input tensors
-            print("\n=== Input Tensors Device Info ===")
-            for key, value in x.items():
-                if isinstance(value, torch.Tensor):
-                    print(f"{key}: {value.device}")
-                elif isinstance(value, dict):
-                    print(f"{key}: (nested dict)")
-                    for k, v in value.items():
-                        if isinstance(v, torch.Tensor):
-                            print(f"  {k}: {v.device}")
 
         def to_device(x, device):
             return {
@@ -101,7 +100,6 @@ class ClayWrapper:
         }  # rgb freqs
 
         x = to_device(x, next(self.clay_model.parameters()).device)
-        # print_device_info(self.clay_model, x)
 
         with torch.no_grad():
             embeddings_raw, *_ = self.clay_model.model.encoder(x)
@@ -115,5 +113,9 @@ class ClayWrapper:
             h=image_size // patch_size // 2,
         )
         # image embeddings
-        e = reduce(patch_embeddings, "b h w d -> b d", "mean")
+        e = reduce(patch_embeddings, "b h w d -> b d", "mean").cpu().numpy()
+
+        # standardize
+        if standardize:
+            e = (e - self.constants['means'])/self.constants['stds']
         return e

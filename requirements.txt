@@ -6,3 +6,6 @@ torchvision
 lightning
 python-box
 einops
+pyyaml
+googlemaps
+json2xml
