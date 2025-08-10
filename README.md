@@ -7,7 +7,7 @@ This is an example. Observe we only use a **semantic search** through embeddings
 ![process](imgs/query-example.png) 
 
 
-## Generation
+## Worflow
 
 We use the following proces to generate image and text embeddings for each satellite image. We use 
 
