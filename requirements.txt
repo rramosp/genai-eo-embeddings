@@ -1,3 +1,8 @@
 mistralai
 google-generativeai
 geoplot
+torch
+torchvision
+lightning
+python-box
+einops

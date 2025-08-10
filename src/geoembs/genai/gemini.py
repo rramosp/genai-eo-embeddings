@@ -15,9 +15,6 @@ millions using text-based search queries.
 
 Structure your description into the following categories, providing specific details for each:
 
-* **Location and Extent:**  Describe the geographic area covered by the image if discernible (e.g., coordinates, region name
-). Estimate the area covered by the image (e.g., square kilometers).
-
 * **Dominant Land Cover:** Identify the most prominent land cover types (e.g., urban, forest, agricultural, water, barren) a
 nd estimate the percentage of the image covered by each.
 
@@ -52,21 +49,24 @@ reas, airports, agricultural infrastructure, etc.), specify:
     - **Arrangement:** (e.g., "linear," "clustered," "grid-like")
     - **Materials (if apparent):** (e.g., "concrete," "metal")
 
-* **Geological Features:**  Describe any unique geological formations.  For each (rock outcrops, fault lines, volcanic features, etc.), specify:
+* **Geological Features:**  Describe any unique geological formations.  For each (rock outcrops, fault lines, volcanic 
+features, etc.), specify:
     - **Type:** (e.g., "granite outcrop," "volcanic crater")
     - **Location:** Precise location
     - **Size/Extent:**
     - **Shape, Color, and Texture:**
 
-* **Other Distinctive Features:**  Describe any other visually prominent features not captured above (e.g., unique land cover textures, atmospheric phenomena, signs of natural events).
+* **Other Distinctive Features:**  Describe any other visually prominent features not captured above (e.g., unique land cover 
+textures, atmospheric phenomena, signs of natural events).
 
 
-Focus on features that are most distinctive and useful for differentiating this image.  Provide specific locations and estimate the extent of features. Pay close attention to spatial relationships, noting the proximity and arrangement of features.  Aim for a comprehensive yet concise description to facilitate accurate and efficient image retrieval using text-based searches.  Provide illustrative examples if necessary.
+Focus on features that are most distinctive and useful for differentiating this image.  Provide specific locations and 
+estimate the extent of features. Pay close attention to spatial relationships, noting the proximity and arrangement of 
+features. Aim for a comprehensive yet concise description to facilitate accurate and efficient image retrieval using 
+text-based searches.  Provide illustrative examples if necessary.
 
 provide a json formated output of 'feature_name': 'percentage of coverage in the image'
 '''
-
-
 
 class GeminiMultimodalModel:
 
