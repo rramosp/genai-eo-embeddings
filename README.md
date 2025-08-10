@@ -1,4 +1,4 @@
-# GeoQuery Demo
+# GeoQuery Proof of Concept
 
 We use an **LLM to generate text descriptions of satellite imagery**, and then do **semantic search** just by using text embeddings. We also use image embeddings to validate how image descriptions can mimic them.
 
