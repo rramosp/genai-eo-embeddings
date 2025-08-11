@@ -19,7 +19,7 @@ We use the following proces to generate image and text embeddings for each satel
 
 ## Instalation
 
-You must have a Google API key for `Generative AI API` and `Geocoding API`. Then do
+You must have a Google API key for `Generative AI API` and `Geocoding API` and provide them in the notebooks when required. Then, after cloning the repo, do
 
 ```
 pip install -r requirements.txt
@@ -31,7 +31,7 @@ We provide precomputed image and text embeddings for 48k locations around the wo
 
 Download and unzip the data for the notebooks for Hugging Face
 
-[https://huggingface.co/datasets/rramosp/geoquery-48k](https://huggingface.co/datasets/rramosp/geoquery-48k)
+[https://huggingface.co/datasets/rramosp/geoquery-48k](https://huggingface.co/datasets/rramosp/geoquery-48k/tree/main)
 
 and adjust the paths in the notebooks accordingly.
 
