@@ -29,11 +29,9 @@ pip install -r requirements.txt
 
 We provide precomputed image and text embeddings for 48k locations around the world, together with their Sentinel2 RGB imagery in chips sized 512x512 pixels at 10m/pixel.
 
-Download and unzip the data for the notebooks in this repo
+Download and unzip the data for the notebooks for Hugging Face
 
-```
-wget https://storage.googleapis.com/disasterbrain-public/hackaton-48k-consolidated.tar.gz
-```
+[https://huggingface.co/datasets/rramosp/geoquery-48k](https://huggingface.co/datasets/rramosp/geoquery-48k)
 
 and adjust the paths in the notebooks accordingly.
 
